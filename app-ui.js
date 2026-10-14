@@ -63,9 +63,11 @@ function initializeEstimate() {
 function runSimulation() {
   const route = document.getElementById("sim-route").value;
   const isExport = route === "EXPORT";
-  document.getElementById("sim-route-note").textContent = isExport
-    ? "Processing, output, printing and storage fields contribute to this draft when applicable."
-    : "Storage-only uses the received coffee and empty-bag counts and their storage days. Processing, output, printing and rework fields are ignored.";
+  const transferJourney = document.getElementById("journey-route").value === "TRANSFER";
+  document.getElementById("sim-route-note").textContent = transferJourney
+    ? "This estimate does not price the two-owner transfer. The selected calculator route remains an independent example."
+    : isExport ? "Processing, output, printing and storage fields contribute to this draft when applicable."
+      : "Storage-only uses the received coffee and empty-bag counts and their storage days. Processing, output, printing and rework fields are ignored.";
   const gradeSelect = document.getElementById("sim-grade");
   const grade = gradeSelect.options[gradeSelect.selectedIndex];
   const screen = document.getElementById("sim-screen").value;
@@ -99,6 +101,7 @@ function runSimulation() {
     labor: selectedLaborJobs
   };
   const result = CoffeeCalculator.calculateEstimate(input);
+  if (transferJourney && !result.errors.length) result.pending.unshift("Article 15.4 transfer rent and credits are not included. Finance review is required.");
   const errors = document.getElementById("sim-errors");
   errors.classList.toggle("hidden", !result.errors.length);
   errors.replaceChildren();

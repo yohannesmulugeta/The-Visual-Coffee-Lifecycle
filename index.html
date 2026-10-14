@@ -947,8 +947,8 @@
       if (route === 'STORAGE' || route === 'EXPORT' || route === 'REWORK') {
         document.getElementById('sim-route').value = route === 'STORAGE' ? 'STORAGE' : 'EXPORT';
         document.getElementById('sim-rework').value = route === 'REWORK' ? 'ECTA' : '1';
-        runSimulation();
       }
+      runSimulation();
     }
 
     function changeEstimateRoute() {

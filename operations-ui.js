@@ -126,5 +126,7 @@ function initializeOperations() {
   } catch (_) {
     // Invalid or unavailable browser storage begins a fresh fictional scenario.
   }
+  document.getElementById("journey-route").value = select.value;
+  changeJourney();
   renderOperations();
 }
