@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hayked General Trading PLC | Coffee ERP Blueprint & Pricing Simulator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans Ethiopic', sans-serif;
+      background-color: #f8fafc;
+    }
+    .step-active {
+      border-color: #059669;
+      background-color: #ecfdf5;
+    }
+    @media (max-width: 767px) {
+      header { position: static !important; }
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+  <!-- Top Header -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-xl shadow-inner">H</div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight">HAYKED GENERAL TRADING PLC (ሀይከድ ጀነራል ትሬዲንግ)</h1>
+          <p class="text-xs text-slate-400">Coffee lifecycle walkthrough • Contract #001/2018 • Gelan, Sheger City</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="switchTab('flow')" id="tab-btn-flow" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-emerald-600 text-white transition">1. Visual Coffee Lifecycle</button>
+        <button onclick="switchTab('catalog')" id="tab-btn-catalog" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">2. Service & Tariff Catalog</button>
+        <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">3. Draft Estimate</button>
+        <button onclick="switchTab('assumptions')" id="tab-btn-assumptions" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">4. Decisions to Confirm</button>
+        <button onclick="switchTab('forms')" id="tab-btn-forms" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">5. Operations Appendix</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+      <strong>Discussion demo.</strong> Prices below are transcribed from Contract #001/2018. The estimate is illustrative, uses stated assumptions, and is not a payable invoice. Hayked operations and finance must confirm documents, work performed, tax treatment, and unresolved clauses.
+    </div>
+
+    <!-- ================= TAB 1: VISUAL COFFEE LIFECYCLE ================= -->
+    <section id="tab-flow" class="space-y-6">
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">End-to-End 3PL Toll-Processing Pipeline</span>
+            <h2 class="text-2xl font-bold text-slate-900 mt-1">The Visual Coffee Lifecycle (ከመግቢያ እስከ ኤክስፖርት)</h2>
+            <p class="text-sm text-slate-500 mt-1">Choose a journey, then open each stage to see the document, action, stock movement, and possible charge.</p>
+          </div>
+          <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 rounded-lg text-xs font-medium">
+            <span>Contract prices exclude VAT & TOT; tax settings need finance review (Art. 23.1)</span>
+          </div>
+        </div>
+        <div class="mt-5 max-w-lg">
+          <label for="journey-route" class="block text-sm font-semibold text-slate-700 mb-1">Show this client journey</label>
+          <select id="journey-route" onchange="changeJourney()" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+            <option value="EXPORT">Export preparation</option>
+            <option value="STORAGE">Storage only, then release</option>
+            <option value="REWORK">Export preparation with quality rework</option>
+            <option value="TRANSFER">Raw coffee transferred to another client</option>
+          </select>
+          <p id="journey-note" class="mt-2 text-sm text-slate-600" aria-live="polite"></p>
+        </div>
+
+        <!-- 6-Stage Interactive Pipeline -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 my-6" id="pipeline-steps"></div>
+
+        <!-- Dynamic Stage Detail Card -->
+        <div id="stage-detail" class="bg-slate-50 rounded-xl p-6 border border-slate-200"></div>
+      </div>
+
+      <!-- Storage Clock State Machine Summary -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <h3 class="text-lg font-bold text-slate-900 mb-2">Storage rate states (Articles 14 – 18)</h3>
+        <p class="text-sm text-slate-500 mb-4">These are separate contract stock states. A future system needs dated receipts and movements to calculate them:</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                <th class="py-3 px-4 font-semibold">Inventory Stage</th>
+                <th class="py-3 px-4 font-semibold">Start Trigger Document</th>
+                <th class="py-3 px-4 font-semibold">Grace Period (Free)</th>
+                <th class="py-3 px-4 font-semibold">Tier 1 Rate</th>
+                <th class="py-3 px-4 font-semibold">Tier 2 Rate</th>
+                <th class="py-3 px-4 font-semibold">Special ERP Rules / Penalties</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="py-3 px-4 font-medium">1. Storage-Only Coffee (ሳይዘጋጅ የሚወጣ)<br><span class="text-xs text-slate-400">Article 14</span></td>
+                <td class="py-3 px-4">Unloading / GRN Date</td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-semibold">0 Days</span></td>
+                <td class="py-3 px-4">First 3 consecutive months:<br><strong>5.00 ETB</strong> / bag / day</td>
+                <td class="py-3 px-4">After 3 Months:<br><strong>7.00 ETB</strong> / bag / day</td>
+                <td class="py-3 px-4 text-xs text-slate-600">Includes loading day. Transfer requires a separate Article 15.4 review.</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-medium">2. Raw Coffee for Export Prep<br><span class="text-xs text-slate-400">Article 15</span></td>
+                <td class="py-3 px-4">Coffee GRN (የገቢ ሰነድ)</td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold">20 Days Free</span></td>
+                <td class="py-3 px-4">Next 3 consecutive months:<br><strong>2.75 ETB</strong> / bag / day</td>
+                <td class="py-3 px-4">After 3 Months:<br><strong>3.50 ETB</strong> / bag / day</td>
+                <td class="py-3 px-4 text-xs text-slate-600">Billed monthly (5 days payment window). Includes loading day.</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-medium">3. Empty Jute Bags (ባዶ ጆንያ)<br><span class="text-xs text-slate-400">Article 16</span></td>
+                <td class="py-3 px-4">Bag GRN (የገቢ ሰነድ)</td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold">10 Days Free</span></td>
+                <td class="py-3 px-4">Days 11 – 40:<br><strong>4.00 ETB</strong> / bundle (50) / day</td>
+                <td class="py-3 px-4">From day 41 for stated 4 months:<br><strong>5.00 ETB</strong> / bundle (50) / day</td>
+                <td class="py-3 px-4 text-xs text-slate-600"><strong>+100 ETB/day flat penalty</strong> after uncollected exit document. Later rent beyond the four months needs confirmation.</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-medium">4. Processed Clean Export Coffee<br><span class="text-xs text-slate-400">Article 17.1 – 17.3</span></td>
+                <td class="py-3 px-4">Output Receipt (የምርት መረከቢያ)</td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold">15 Days Free</span></td>
+                <td class="py-3 px-4">Next 3 consecutive months:<br><strong>3.00 ETB</strong> / bag / day</td>
+                <td class="py-3 px-4">After 3 Months:<br><strong>5.00 ETB</strong> / bag / day<br><span class="text-xs text-emerald-700 font-semibold">(6.00 ETB if Certified)</span></td>
+                <td class="py-3 px-4 text-xs text-slate-600">Certified coffee (UTZ, RFA, Organic, Cafe Practice) pays 6.00 ETB/bag/day after 3 months.</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-medium">5. Grade-Improved Coffee (ደረጃ ማሻሻያ)<br><span class="text-xs text-slate-400">Article 17.4</span></td>
+                <td class="py-3 px-4">Output Receipt (የምርት መረከቢያ)</td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-semibold">5 Days Free</span></td>
+                <td class="py-3 px-4">Following period references Art. 17.2:<br><strong>3.00 ETB</strong> / bag / day</td>
+                <td class="py-3 px-4">Later bracket:<br><strong>Confirm with Hayked</strong></td>
+                <td class="py-3 px-4 text-xs text-slate-600">Main or gravity line. Art. 17.4 references 17.1–17.2; later rate is not restated clearly.</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-medium">6. Reject / By-Product Coffee (ብጣሪ)<br><span class="text-xs text-slate-400">Article 18</span></td>
+                <td class="py-3 px-4">Reject Receipt Date</td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold">10 Days Free</span></td>
+                <td class="py-3 px-4">Days 11 – 30:<br><strong>4.00 ETB</strong> / bag / day</td>
+                <td class="py-3 px-4">Day 31+:<br><strong>6.00 ETB</strong> / bag / day</td>
+                <td class="py-3 px-4 text-xs text-slate-600">Requires ECTA letter for ECX dispatch (Art. 4.5).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: SERVICE & TARIFF CATALOG ================= -->
+    <section id="tab-catalog" class="hidden space-y-6">
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">A. Core Export Coffee Processing Rates (Article 13)</h2>
+            <p class="text-sm text-slate-500">Calculated per <strong>Metric Ton of Clean Coffee Output (ንፁህ የቡና ምርት ውጤት)</strong>. Minimum billable batch = <strong>19.2 MT</strong> (Art. 13.7, 13.19).</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="overflow-x-auto border border-slate-200 rounded-lg">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                  <th class="py-2.5 px-3">Clause</th>
+                  <th class="py-2.5 px-3">Coffee Preparation Type</th>
+                  <th class="py-2.5 px-3 text-right">Screen 14 (ETB/Ton)</th>
+                  <th class="py-2.5 px-3 text-right">Screen 15+ (ETB/Ton)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200" id="processing-table-body"></tbody>
+            </table>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500">Special Processing, Blending & Packaging Add-Ons (Art. 13.2 – 13.21)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm" id="special-services-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">B. 41 Piece-Rate Labor & Handling Services (የጉልበት ስራ - Article 19.1)</h2>
+            <p class="text-sm text-slate-500">These are client service tariffs for work actually performed. Worker payroll terms require a separate agreement.</p>
+          </div>
+          <div class="flex gap-2">
+            <input type="text" id="labor-search" oninput="renderLaborCatalog()" placeholder="Search by code, Amharic, or English..." class="px-3 py-2 border border-slate-300 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <select id="labor-category" onchange="renderLaborCatalog()" class="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white">
+              <option value="ALL">All Categories (41)</option>
+              <option value="Inbound & Empty Bags">Inbound & Empty Bags</option>
+              <option value="In-House & Silo Feeding">In-House & Silo Feeding</option>
+              <option value="Packaging, Sewing & Tagging">Packaging, Sewing & Tagging</option>
+              <option value="Rejects, Sabiya & Drying">Rejects, Sabiya & Drying</option>
+              <option value="Outbound & Container Loading">Outbound & Container Loading</option>
+            </select>
+          </div>
+        </div>
+        <div class="overflow-x-auto border border-slate-200 rounded-lg max-h-[500px] overflow-y-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="sticky top-0 bg-slate-100 text-slate-700 border-b border-slate-200 shadow-sm">
+              <tr>
+                <th class="py-2.5 px-3">Clause</th>
+                <th class="py-2.5 px-3">Category</th>
+                <th class="py-2.5 px-3">Service Description (English & አማርኛ)</th>
+                <th class="py-2.5 px-3">Unit (መለኪያ)</th>
+                <th class="py-2.5 px-3 text-right">Rate (ETB)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200" id="labor-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <h2 class="text-xl font-bold text-slate-900 mb-1">C. Jute Bag Printing Volume Tiers (የጆንያ ህትመት - Article 19.2)</h2>
+        <p class="text-sm text-slate-500 mb-4">Applies to 1-sided or 2-sided printing. Minimum order is <strong>50 bags</strong> (below 50 requires a separate ad-hoc price agreement).</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-lg border border-slate-200 bg-slate-50">
+            <span class="text-xs font-semibold text-slate-500">Art. 19.2.1.1 • Tier 1</span>
+            <h4 class="text-lg font-bold text-slate-900 mt-1">50 – 99 Bags</h4>
+            <p class="text-2xl font-extrabold text-emerald-600 mt-2">69.57 ETB <span class="text-xs font-normal text-slate-500">/ bag (Pre-VAT)</span></p>
+            <p class="text-xs text-slate-500 mt-1">Tax is additional; finance must confirm its rate and rounding.</p>
+          </div>
+          <div class="p-4 rounded-lg border border-slate-200 bg-slate-50">
+            <span class="text-xs font-semibold text-slate-500">Art. 19.2.1.2 • Tier 2</span>
+            <h4 class="text-lg font-bold text-slate-900 mt-1">100 – 159 Bags</h4>
+            <p class="text-2xl font-extrabold text-emerald-600 mt-2">55.65 ETB <span class="text-xs font-normal text-slate-500">/ bag (Pre-VAT)</span></p>
+            <p class="text-xs text-slate-500 mt-1">Tax is additional; finance must confirm its rate and rounding.</p>
+          </div>
+          <div class="p-4 rounded-lg border border-slate-200 bg-slate-50">
+            <span class="text-xs font-semibold text-slate-500">Art. 19.2.1.3 • Tier 3</span>
+            <h4 class="text-lg font-bold text-slate-900 mt-1">160+ Bags</h4>
+            <p class="text-2xl font-extrabold text-emerald-600 mt-2">43.48 ETB <span class="text-xs font-normal text-slate-500">/ bag (Pre-VAT)</span></p>
+            <p class="text-xs text-slate-500 mt-1">Tax is additional; finance must confirm its rate and rounding.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: LIVE INVOICE & YIELD SIMULATOR ================= -->
+    <section id="tab-simulator" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-6">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Interactive Contract Engine</span>
+            <h2 class="text-xl font-bold text-slate-900 mt-1">Batch Yield & Draft Estimate</h2>
+            <p class="text-sm text-slate-500">Explore contract prices with a sample lot. Only the activities you add are charged. An estimate cannot clear goods for dispatch.</p>
+          </div>
+          <div>
+            <label for="sim-route" class="block text-xs font-medium text-slate-600 mb-1">Service route</label>
+            <select id="sim-route" onchange="changeEstimateRoute()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white">
+              <option value="EXPORT">Export preparation</option>
+              <option value="STORAGE">Storage only, no processing</option>
+            </select>
+            <p id="sim-route-note" class="mt-2 text-xs text-slate-600" aria-live="polite"></p>
+          </div>
+
+          <div class="space-y-4 border-t border-slate-100 pt-4">
+            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">1. Batch Weight & Processing Setup</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label for="sim-raw-mt" class="block text-xs font-medium text-slate-600 mb-1">Raw Coffee Input (MT)</label>
+                <input type="number" min="0" step="0.01" id="sim-raw-mt" value="25.5" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-raw-bags" class="block text-xs font-medium text-slate-600 mb-1">Raw Bags Count (ኬሻ)</label>
+                <input type="number" min="0" step="1" id="sim-raw-bags" value="300" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-clean-mt" class="block text-xs font-medium text-slate-600 mb-1">Clean Export Output (MT)</label>
+                <input type="number" min="0" step="0.01" id="sim-clean-mt" value="19.5" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label for="sim-reject-mt" class="block text-xs font-medium text-slate-600 mb-1">Reject Output (MT)</label>
+                <input type="number" min="0" step="0.01" id="sim-reject-mt" value="0.8" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-clean-bags" class="block text-xs font-medium text-slate-600 mb-1">Clean Export Bags (60kg)</label>
+                <input type="number" min="0" step="1" id="sim-clean-bags" value="325" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-reject-bags" class="block text-xs font-medium text-slate-600 mb-1">Reject Bags Count</label>
+                <input type="number" min="0" step="1" id="sim-reject-bags" value="12" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label for="sim-leftover-mt" class="block text-xs font-medium text-slate-600 mb-1">Leftover raw (MT)</label>
+                <input type="number" min="0" step="0.01" id="sim-leftover-mt" value="0" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-parchment-mt" class="block text-xs font-medium text-slate-600 mb-1">Washed parchment (MT)</label>
+                <input type="number" min="0" step="0.01" id="sim-parchment-mt" value="5.1" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-dust-mt" class="block text-xs font-medium text-slate-600 mb-1">Dust / loss (MT)</label>
+                <input type="number" min="0" step="0.01" id="sim-dust-mt" value="0.1" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="sim-grade" class="block text-xs font-medium text-slate-600 mb-1">Coffee Grade & Type (Art. 13.1)</label>
+                <select id="sim-grade" onchange="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white">
+                  <option value="W1" data-s14="3500" data-s15="3700" data-washed="true">13.1.1 Washed Grade 1 (3,500 / 3,700)</option>
+                  <option value="W2" data-s14="3300" data-s15="3500" data-washed="true">13.1.2 Washed Grade 2 (3,300 / 3,500)</option>
+                  <option value="U1" data-s14="3500" data-s15="3700" data-washed="false">13.1.3 Unwashed Grade 1 (3,500 / 3,700)</option>
+                  <option value="U2" data-s14="3300" data-s15="3500" data-washed="false">13.1.4 Unwashed Grade 2 (3,300 / 3,500)</option>
+                  <option value="U3" data-s14="3100" data-s15="3300" data-washed="false">13.1.5 Unwashed Grade 3 (3,100 / 3,300)</option>
+                  <option value="U4" data-s14="2700" data-s15="2900" data-washed="false">13.1.6 Unwashed Grade 4 (2,700 / 2,900)</option>
+                  <option value="U5" data-s14="2800" data-s15="3000" data-washed="false">13.1.7 Unwashed Grade 5 (2,800 / 3,000)</option>
+                </select>
+              </div>
+              <div>
+                <span class="block text-xs font-medium text-slate-600 mb-1">Screen size and rework status</span>
+                <div class="flex gap-2">
+                  <label for="sim-screen" class="sr-only">Screen size</label>
+                  <select id="sim-screen" onchange="runSimulation()" class="w-1/2 px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white">
+                    <option value="15">Screen 15+</option>
+                    <option value="14">Screen 14</option>
+                  </select>
+                  <label for="sim-rework" class="sr-only">Rework status</label>
+                  <select id="sim-rework" onchange="runSimulation()" class="w-1/2 px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white">
+                    <option value="1">First Run (100%)</option>
+                    <option value="ECTA">ECTA failure: add 75% rerun</option>
+                    <option value="CLIENT">Client request: add 100% rerun</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <label class="flex items-center gap-2 text-xs font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-200 cursor-pointer">
+                <input type="checkbox" id="sim-grainpro" onchange="runSimulation()" class="rounded text-emerald-600" />
+                <span>GrainPro / Double Bag (+500/T)</span>
+              </label>
+              <label class="flex items-center gap-2 text-xs font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-200 cursor-pointer">
+                <input type="checkbox" id="sim-certified" onchange="runSimulation()" class="rounded text-emerald-600" />
+                <span>Certified Coffee (+1,000/T)</span>
+              </label>
+              <label class="flex items-center gap-2 text-xs font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-200 cursor-pointer">
+                <input type="checkbox" id="sim-blending" onchange="runSimulation()" class="rounded text-emerald-600" />
+                <span>Machine Blending (+1,000/T)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="space-y-4 border-t border-slate-100 pt-4">
+            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">2. Warehouse Storage Days (Articles 15, 17, 18)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label for="sim-days-raw" class="block text-xs font-medium text-slate-600 mb-1">Raw days held (export: 20 free; storage-only: none)</label>
+                <input type="number" min="0" step="1" id="sim-days-raw" value="28" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-days-clean" class="block text-xs font-medium text-slate-600 mb-1">Clean days held (15 free)</label>
+                <input type="number" min="0" step="1" id="sim-days-clean" value="18" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-days-reject" class="block text-xs font-medium text-slate-600 mb-1">Reject days held (10 free)</label>
+                <input type="number" min="0" step="1" id="sim-days-reject" value="14" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label for="sim-empty-bundles" class="block text-xs font-medium text-slate-600 mb-1">Empty jute bundles (50 bags each)</label>
+                <input type="number" min="0" step="1" id="sim-empty-bundles" value="0" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-days-empty" class="block text-xs font-medium text-slate-600 mb-1">Empty bag days held</label>
+                <input type="number" min="0" step="1" id="sim-days-empty" value="0" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-empty-delay" class="block text-xs font-medium text-slate-600 mb-1">Days after uncollected exit document</label>
+                <input type="number" min="0" step="1" id="sim-empty-delay" value="0" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+            </div>
+            <p class="text-xs text-slate-500">Article 16: 10 free days, then 4 ETB per bundle/day through day 40, then 5 ETB for the stated four months. Later pricing needs agreement.</p>
+          </div>
+
+          <div class="space-y-4 border-t border-slate-100 pt-4">
+            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">3. Printing, Labor & Container Dispatch</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="sim-print-bags" class="block text-xs font-medium text-slate-600 mb-1">Bags to Print (Art. 19.2 Tiers)</label>
+                <input type="number" min="0" step="1" id="sim-print-bags" value="325" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label for="sim-container" class="block text-xs font-medium text-slate-600 mb-1">Container Loading Mode (Art. 13.20)</label>
+                <select id="sim-container" onchange="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white">
+                  <option value="NONE">No container blower</option>
+                  <option value="BULK20">20ft bulk air-blower (10,000 ETB)</option>
+                  <option value="BULK40">40ft bulk air-blower (16,000 ETB)</option>
+                </select>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500">Loading, hopper feeding and container lining labor are separate Article 19.1 activities. Add them below only if performed.</p>
+            <div class="border-t border-slate-100 pt-4">
+              <h4 class="text-sm font-semibold text-slate-800">Actual labor activities (Art. 19.1)</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-[1fr_7rem_auto] gap-2 mt-2">
+                <label for="sim-labor-code" class="sr-only">Labor activity</label>
+                <select id="sim-labor-code" class="min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"></select>
+                <label for="sim-labor-quantity" class="sr-only">Activity quantity</label>
+                <input id="sim-labor-quantity" type="number" min="1" step="1" value="1" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <button type="button" onclick="addLabor()" class="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white">Add</button>
+              </div>
+              <div id="sim-labor-selected" class="mt-3 space-y-2 text-sm"></div>
+            </div>
+            <div>
+              <label for="sim-tax-rate" class="block text-xs font-medium text-slate-600 mb-1">Illustrative tax rate % (optional; finance must confirm VAT/TOT)</label>
+              <input id="sim-tax-rate" type="number" min="0" max="100" step="0.01" placeholder="Leave blank for pre-tax only" oninput="runSimulation()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-6">
+          <div class="bg-slate-900 text-white rounded-xl p-6 shadow-sm">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400">Mass balance check (Art. 20)</h3>
+            <div id="sim-mass-balance" class="mt-4 space-y-3 text-sm"></div>
+          </div>
+
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-slate-900">Draft service estimate</h3>
+                <p class="text-xs text-slate-500">Illustration only; requires document and finance review</p>
+              </div>
+              <span class="px-2.5 py-1 bg-amber-100 text-amber-900 rounded text-xs font-bold">Not an invoice</span>
+            </div>
+            <div id="sim-errors" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert"></div>
+            <div id="sim-notices" class="mb-4 space-y-2 text-xs text-amber-900" aria-live="polite"></div>
+            <div id="sim-invoice-lines" class="space-y-2.5 text-sm"></div>
+            <div id="sim-invoice-totals" class="mt-6 pt-4 border-t border-slate-200 space-y-2"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: ERP FORMS & DATABASE SCHEMA ================= -->
+    <section id="tab-forms" class="hidden space-y-6">
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Core Operational Documents & Data Model</span>
+        <h2 class="text-2xl font-bold text-slate-900 mt-1">Proposed operational records</h2>
+        <p class="text-sm text-slate-500 mt-1 mb-6">These four record groups are a proposed ERP design. The contract requires signed receipts, requests and release evidence, but does not prescribe this database schema or QR tags.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Voucher 1 -->
+          <div class="border border-slate-200 rounded-xl p-5 bg-slate-50">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <span class="text-xs font-bold text-emerald-700 uppercase">Voucher #1 • Articles 5, 6, 10</span>
+                <h3 class="text-base font-bold text-slate-900">Coffee & Bag GRN (የገቢ ደረሰኝ)</h3>
+              </div>
+              <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded text-xs font-semibold">Starts Raw Clock</span>
+            </div>
+            <div class="mt-3 space-y-2 text-xs text-slate-700">
+              <p><strong>Required Fields:</strong> Client Name, Legal Agent Name & POA Ref, ECTA Waybill No. (ሸኚ ደብዳቤ), Truck Plate & Seal No., Coffee Type (Washed/Unwashed) & Origin, Bag Count (በኬሻ), Gross/Tare/Net Weight (kg), Warehouse & Stack Tag ID (ታግ).</p>
+              <p class="text-slate-500"><strong>Proposed system action:</strong> Create a client lot and receipt record; record unloading only if performed. A QR tag is optional.</p>
+            </div>
+          </div>
+
+          <!-- Voucher 2 -->
+          <div class="border border-slate-200 rounded-xl p-5 bg-slate-50">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <span class="text-xs font-bold text-emerald-700 uppercase">Voucher #2 • Articles 7, 12, 23.2</span>
+                <h3 class="text-base font-bold text-slate-900">Silo Job Card & Generator Consent (የዝግጅት ትዕዛዝ)</h3>
+              </div>
+              <span class="px-2.5 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">Stops Raw Clock</span>
+            </div>
+            <div class="mt-3 space-y-2 text-xs text-slate-700">
+              <p><strong>Required Fields:</strong> FIFO Queue No., Target Export Grade (G1–G5), Screen Size (14 vs 15+), Packaging Spec (Single, Double, GrainPro, Carton, Vacuum), Bag Printing Design Approval, Generator Diesel Consent Signature.</p>
+              <p class="text-slate-500"><strong>Proposed system action:</strong> Record stock moved to processing, packaging consumed and actual silo labor. The raw storage cutoff needs client confirmation.</p>
+            </div>
+          </div>
+
+          <!-- Voucher 3 -->
+          <div class="border border-slate-200 rounded-xl p-5 bg-slate-50">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <span class="text-xs font-bold text-emerald-700 uppercase">Voucher #3 • Articles 17.1, 18.1, 20</span>
+                <h3 class="text-base font-bold text-slate-900">Production Output Receipt (የምርት መረከቢያ ሰነድ)</h3>
+              </div>
+              <span class="px-2.5 py-1 bg-amber-100 text-amber-900 rounded text-xs font-semibold">Starts Output Clocks</span>
+            </div>
+            <div class="mt-3 space-y-2 text-xs text-slate-700">
+              <p><strong>Required Fields:</strong> Clean Coffee Output (MT & Bags), Reject/By-Product Output (MT & Bags), Leftover Raw Coffee, Parchment Retained (20% Washed), Dust Shrinkage (≤2.5%).</p>
+              <p class="text-slate-500"><strong>Proposed system action:</strong> Reconcile outputs and start the clean and reject storage clocks from their receipts; review the minimum-charge scope.</p>
+            </div>
+          </div>
+
+          <!-- Voucher 4 -->
+          <div class="border border-slate-200 rounded-xl p-5 bg-slate-50">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <span class="text-xs font-bold text-emerald-700 uppercase">Voucher #4 • Articles 3.3, 4.4–4.6, 22.2</span>
+                <h3 class="text-base font-bold text-slate-900">Final Dispatch & Gate Pass (የወጪ ደረሰኝ)</h3>
+              </div>
+              <span class="px-2.5 py-1 bg-purple-100 text-purple-800 rounded text-xs font-semibold">Requires Paid Invoice</span>
+            </div>
+            <div class="mt-3 space-y-2 text-xs text-slate-700">
+              <p><strong>Required Fields:</strong> Client Official Loading Letter Ref, ECTA Reject Transfer Permit (if ECX), Finance Clearance Stamp (100% Paid), Dispatched Clean Bags/Container No., Returned Empty Bags Count.</p>
+              <p class="text-slate-500"><strong>Proposed system action:</strong> Check payment, release documents and stock before issuing a signed goods issue. Partial dispatch must leave the remaining balance open.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 5: ASSUMPTIONS & EDGE CASES ================= -->
+    <section id="tab-assumptions" class="hidden space-y-6">
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Pre-Development Sign-Off Checklist</span>
+        <h2 class="text-2xl font-bold text-slate-900 mt-1">ERP Engineering Assumptions & Contract Clarifications</h2>
+        <p class="text-sm text-slate-500 mt-1 mb-6">Review these 6 architectural assumptions with Hayked General Trading management before finalizing the database schema.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-5 rounded-xl border border-amber-200 bg-amber-50/60">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 bg-amber-200 text-amber-900 rounded text-xs font-bold">Contract Anomaly #1</span>
+              <span class="text-xs font-medium text-amber-800">Article 13.1 Table</span>
+            </div>
+            <h3 class="font-bold text-slate-900 mt-2">Unclear Row 13.1.13 & Unwashed Grade 4/5 Prices</h3>
+            <p class="text-sm text-slate-600 mt-1">The scanned contract (Page 6) shows a short but unclear Amharic label for <strong>13.1.13</strong> and prices of 3,000 / 3,200 ETB. It also prints <strong>13.1.6 Grade 4</strong> at 2,700 / 2,900 and <strong>13.1.7 Grade 5</strong> at 2,800 / 3,000. Keep those printed values until Hayked confirms both points.</p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-bold">Assumption #2</span>
+              <span class="text-xs font-medium text-slate-500">Articles 14, 15, 17</span>
+            </div>
+            <h3 class="font-bold text-slate-900 mt-2">How should three months be counted?</h3>
+            <p class="text-sm text-slate-600 mt-1">The contract says "three consecutive months." This demo uses 90 days only as an illustration. Hayked must choose calendar-month or fixed-day boundaries and confirm the chargeable start/end days.</p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-bold">Assumption #3</span>
+              <span class="text-xs font-medium text-slate-500">Articles 15.1 & 17.1</span>
+            </div>
+            <h3 class="font-bold text-slate-900 mt-2">Exact Cut-Off Date Between Raw & Processed Storage</h3>
+            <p class="text-sm text-slate-600 mt-1">Output receipt dates start the processed and reject clocks. The exact raw-stock cutoff and treatment of the processing day need agreement, especially for partially processed lots.</p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-bold">Assumption #4</span>
+              <span class="text-xs font-medium text-slate-500">Article 15.4</span>
+            </div>
+            <h3 class="font-bold text-slate-900 mt-2">Retroactive Re-Billing on Ownership Transfer</h3>
+            <p class="text-sm text-slate-600 mt-1">Article 15.4 changes storage treatment when raw coffee transfers to another client. The first owner's retrospective charge and the second owner's later exit need a documented billing decision before automation.</p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-bold">Assumption #5</span>
+              <span class="text-xs font-medium text-slate-500">Articles 20.1 & 20.3</span>
+            </div>
+            <h3 class="font-bold text-slate-900 mt-2">20% Washed Parchment Retention & Mass Balance</h3>
+            <p class="text-sm text-slate-600 mt-1">Record washed parchment separately from dust/loss and distinguish its ownership. The draft estimate checks the stated 20% parchment and 2.5% dust limits; a real stock adjustment still needs review.</p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-bold">Assumption #6</span>
+              <span class="text-xs font-medium text-slate-500">Articles 3.3, 4.4 & 22</span>
+            </div>
+            <h3 class="font-bold text-slate-900 mt-2">Payment clearance and debt escalation</h3>
+            <p class="text-sm text-slate-600 mt-1">Payment and release documents must be checked before handover. This static demo cannot enforce a gate. Articles 15.5 and 22 describe warning and lawful debt recovery; valuation and escalation need management review.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="calculator.js"></script>
+  <script src="app-ui.js"></script>
+  <script>
+    const lifecycleStages = [
+      {
+        id: 1,
+        title: "1. Pre-Arrival & Bags",
+        amharic: "ቅድመ ዝግጅት እና ጆንያ ርክክብ",
+        articles: "Articles 4.3, 11, 16, 19.2",
+        docs: [
+          "Legal Representative Power of Attorney (የውክልና ማስረጃ)",
+          "Empty Jute Bags & GrainPro GRN (የባዶ ጆንያ የገቢ ደረሰኝ)",
+          "Bag Printing Artwork & Spec Order (የጆንያ ህትመት ትዕዛዝ)"
+        ],
+        actions: [
+          "Receive client's new jute bags (in bundles of 50) & GrainPro cartons prior to coffee processing.",
+          "Start 10-day free storage clock for empty bags (Art. 16.1).",
+          "Print export markings on bags if ordered; fewer than 50 need a separate price agreement."
+        ],
+        pricing: [
+          "Unloading Empty Bags (19.1.16): 10.00 ETB / bundle (50 pcs)",
+          "Unloading GrainPro (19.1.17): 10.00 ETB / carton",
+          "Bag Printing (19.2): 69.57 ETB (50-99), 55.65 ETB (100-159), 43.48 ETB (160+)",
+          "Empty Bag Storage (16.2-16.3): 10d free -> 4.00 ETB/bundle/day (d11-40) -> 5.00 ETB from day 41 for the stated four months; later rate needs agreement."
+        ]
+      },
+      {
+        id: 2,
+        title: "2. Inbound & Receiving",
+        amharic: "ቡና መረከብ እና መጋዘን ማስገባት",
+        articles: "Articles 5, 6, 10, 14, 15",
+        docs: [
+          "Sealed Truck & ECTA Waybill (ከቡናና ሻይ ባለሥልጣን ሸኚ ደብዳቤ)",
+          "Service Request Form (የአገልግሎት መጠየቂያ ቅፅ)",
+          "Coffee Goods Receiving Note / GRN (የቡና የገቢ ደረሰኝ)",
+          "Stack Identification Tag (የቡና መለያ ታግ)"
+        ],
+        actions: [
+          "Verify ECTA waybill against sealed truck.",
+          "Count bags and weigh batch on Hayked scale; co-sign GRN with client agent.",
+          "Stack strictly separated from other clients' coffee and attach Stack ID Tag.",
+          "Queue the batch by documented service-request order (Art. 7)."
+        ],
+        pricing: [
+          "Unloading & Stacking Coffee (19.1.1): 12.00 ETB / bag",
+          "Export-Prep Raw Storage (15.1-15.3): 20d free -> 2.75 ETB/bag/day (3 mos) -> 3.50 ETB",
+          "Storage-Only Rate (14.2-14.3): 0d free -> 5.00 ETB/bag/day (3 mos) -> 7.00 ETB"
+        ]
+      },
+      {
+        id: 3,
+        title: "3. Silo & Machine Run",
+        amharic: "ወደ ቋት ማስገባት እና ማበጠር",
+        articles: "Articles 7, 8, 12, 13, 23.2",
+        docs: [
+          "Proposed production order / silo ticket",
+          "Client Agent Written In-Process Feedback (if any, Art. 12)",
+          "Generator Fuel Consent Form (if power outage, Art. 23.2)"
+        ],
+        actions: [
+          "Move raw bags from stack and dump into processing hopper/silo (ቋት).",
+          "Run Main Line, Gravity Line, Belt Picking (ችንጊያ), or Blending.",
+          "Client representative monitors run in person (written notice required for adjustments)."
+        ],
+        pricing: [
+          "Dumping into Silo (19.1.4): 17.00 ETB / bag (or 20.00 ETB from Whse #3)",
+          "Machine Cleaning on Batch Switch (19.1.22): 10.00 ETB / bag",
+          "Core Cleaning & Grading (13.1): 2,700 – 3,700 ETB / Ton of Clean Output; review the 19.2 MT minimum scope",
+          "Special Prep (13.2-13.3): 6,000 ETB/Ton | Certified Surcharge (13.14): +1,000 ETB/Ton"
+        ]
+      },
+      {
+        id: 4,
+        title: "4. Bagging & Mass Balance",
+        amharic: "ምርት መረከቢያ፣ ፈሰስ እና ማሸግ",
+        articles: "Articles 13.8, 17, 18, 20, 21",
+        docs: [
+          "Clean Coffee Output Receipt (የምርት መረከቢያ ሰነድ)",
+          "Reject / By-Product Output Receipt (የብጣሪ መረከቢያ ሰነድ)",
+          "Mass-Balance & Shrinkage Reconciliation Sheet"
+        ],
+        actions: [
+          "Account for shrinkage: up to 22.5% for Washed (20% parchment retained by Hayked + 2.5% dust) or 2.5% for Unwashed.",
+          "Pack clean coffee into new printed bags (with GrainPro/Double bag if requested), sew, and tag.",
+          "Draw, weigh, and stack Reject coffee (ብጣሪ).",
+          "Start clean coffee (15d free) and reject (10d free) clocks from their output receipts; confirm the raw cutoff date."
+        ],
+        pricing: [
+          "GrainPro/Double Bag Surcharge (13.8): +500.00 ETB / Ton + 6.00 ETB/bag liner insertion",
+          "Stacking Clean Coffee (19.1.6): 12.00 ETB / bag | Sisal Sewing (19.1.33-34): 19–20 ETB / bag",
+          "Drawing, Weighing & Stacking Rejects (19.1.7 / 19.1.30): 16.00 – 19.00 ETB / bag"
+        ]
+      },
+      {
+        id: 5,
+        title: "5. ECTA Quality & Sampling",
+        amharic: "ናሙና እና የጥራት ምርመራ",
+        articles: "Articles 4.7, 13.5, 13.9",
+        docs: [
+          "Official Sample Request Form (የናሙና መውሰጃ ቅፅ)",
+          "ECTA Quality & Liquoring Center Result Certificate"
+        ],
+        actions: [
+          "Authorized manager or agent signs Sample Request Form to draw samples.",
+          "Submit lot to ECTA Quality & Liquoring Inspection Center.",
+          "If ECTA rejects the lot, return batch to hopper for re-processing."
+        ],
+        pricing: [
+          "Re-processing after ECTA Failure (13.5): 75% of applicable Grade rate in Table 13.1",
+          "Client-requested Re-processing prior to ECTA (13.5 / 13.9): 100% of Grade rate"
+        ]
+      },
+      {
+        id: 6,
+        title: "6. Settlement & Dispatch",
+        amharic: "ክፍያ እና ጭነት ማስወጣት",
+        articles: "Articles 3.3, 4.4–4.6, 13.20, 22",
+        docs: [
+          "Finance Service Invoice (issued within 3 days, Art. 22.4)",
+          "Bank-to-Bank Payment Confirmation (within 5 days, Art. 22.5)",
+          "Official Client Export Loading Request Letter (Art. 4.6)",
+          "ECTA Permit for Reject Coffee to ECX (Art. 4.5)",
+          "Final Goods Issue / Gate Pass (የወጪ ደረሰኝ - Art. 22.2)"
+        ],
+        actions: [
+          "Verify settlement and required release documents before handing over goods.",
+          "Load export coffee via Bulk Air-Blower Container or Bag Loading.",
+          "Release leftover empty bags, reject coffee, and remaining coffee via Gate Pass."
+        ],
+        pricing: [
+          "Bulk Container Air Blower (13.20): 10,000 ETB (20ft) / 16,000 ETB (40ft)",
+          "Dumping to Bulk Hopper (19.1.14): 17.00 ETB / bag | Container Liner/Kraft (19.1.20/41): 200 ETB",
+          "Standard Truck Loading (19.1.2): 12.00 ETB / bag"
+        ]
+      },
+      {
+        id: 7,
+        title: "Storage Hold",
+        amharic: "የመጋዘን ክምችት",
+        articles: "Articles 14–18",
+        docs: ["Signed coffee or bag receipt", "Dated stock movement and monthly storage statement"],
+        actions: ["Keep each owner's coffee and packaging separate.", "Charge the applicable stock state while goods remain.", "Record partial release against the remaining balance."],
+        pricing: ["Storage-only coffee: 5 then 7 ETB/bag/day with no free period (Art. 14).", "Export raw, clean, reject and empty bags have different grace periods and rates (Arts. 15–18)."]
+      },
+      {
+        id: 8,
+        title: "Ownership Transfer",
+        amharic: "የባለቤትነት ዝውውር",
+        articles: "Article 15.4",
+        docs: ["Written transfer authority", "Stock balance and finance reconciliation for both clients"],
+        actions: ["Record who gives and receives each bag and the transfer date.", "Review retrospective rent for the outgoing owner.", "Confirm how the new owner's later exit is charged before automating."],
+        pricing: ["The transferring owner's raw-coffee grace/rate treatment changes under Article 15.4.", "The second-owner branch needs client confirmation; this demo does not calculate it."]
+      }
+    ];
+
+    const processingRates = [
+      { code: "13.1.1", name: "Washed Coffee Grade 1 (የታጠበ ቡና ደረጃ 1)", s14: "3,500.00", s15: "3,700.00" },
+      { code: "13.1.2", name: "Washed Coffee Grade 2 (የታጠበ ቡና ደረጃ 2)", s14: "3,300.00", s15: "3,500.00" },
+      { code: "13.1.3", name: "Unwashed Coffee Grade 1 (ያልታጠበ ቡና ደረጃ 1)", s14: "3,500.00", s15: "3,700.00" },
+      { code: "13.1.4", name: "Unwashed Coffee Grade 2 (ያልታጠበ ቡና ደረጃ 2)", s14: "3,300.00", s15: "3,500.00" },
+      { code: "13.1.5", name: "Unwashed Coffee Grade 3 (ያልታጠበ ቡና ደረጃ 3)", s14: "3,100.00", s15: "3,300.00" },
+      { code: "13.1.6", name: "Unwashed Coffee Grade 4 (ያልታጠበ ቡና ደረጃ 4)", s14: "2,700.00", s15: "2,900.00" },
+      { code: "13.1.7", name: "Unwashed Coffee Grade 5 (ያልታጠበ ቡና ደረጃ 5)", s14: "2,800.00", s15: "3,000.00" },
+      { code: "13.1.8", name: "Reject/By-product Grade 1 (ብጣሪ ቡና ደረጃ 1)", s14: "3,500.00", s15: "3,700.00" },
+      { code: "13.1.9", name: "Reject/By-product Grade 2 (ብጣሪ ቡና ደረጃ 2)", s14: "3,300.00", s15: "3,500.00" },
+      { code: "13.1.10", name: "Reject/By-product Grade 3 (ብጣሪ ቡና ደረጃ 3)", s14: "3,100.00", s15: "3,300.00" },
+      { code: "13.1.11", name: "Reject/By-product Grade 4 (ብጣሪ ቡና ደረጃ 4)", s14: "2,900.00", s15: "3,100.00" },
+      { code: "13.1.12", name: "Reject/By-product Grade 5 (ብጣሪ ቡና ደረጃ 5)", s14: "2,700.00", s15: "2,900.00" },
+      { code: "13.1.13", name: "[Short Amharic label unclear – confirm before quoting]", s14: "3,000.00", s15: "3,200.00" },
+      { code: "13.15", name: "C-Grade Coffee on Main Line (ሲ-ግሬድ ቡና)", s14: "Grade 5 Rate", s15: "Grade 5 Rate" }
+    ];
+
+    const specialServices = [
+      { code: "13.2", title: "Special Washed Prep (ልዩ ዝግጅት - የታጠበ)", rate: "6,000.00 ETB / Ton" },
+      { code: "13.3", title: "Special Unwashed Prep (ልዩ ዝግጅት - ቅሽር)", rate: "6,000.00 ETB / Ton" },
+      { code: "13.4", title: "UG Unpicked Mixed (ዩጂ በእጅ ያልተለቀመ)", rate: "800.00 ETB / Ton" },
+      { code: "13.5", title: "Re-Processing after ECTA Quality Fail", rate: "75% of Grade Rate" },
+      { code: "13.5", title: "Client-Requested Re-Processing Before Inspection", rate: "100% of Grade Rate" },
+      { code: "13.8", title: "Double Bag or GrainPro/EcoTact Surcharge", rate: "+500.00 ETB / Ton" },
+      { code: "13.9", title: "Return to Machine or Hand-Picking Belt", rate: "100% of Grade Rate" },
+      { code: "13.10", title: "Machine Blending after Quality Picking", rate: "1,000.00 ETB / Ton" },
+      { code: "13.11", title: "Manual Blending by Labor after Picking", rate: "1,500.00 ETB / Ton" },
+      { code: "13.12", title: "Blending Coffee Not Processed on Main Line", rate: "2,000.00 ETB / Ton" },
+      { code: "13.14", title: "Certified Coffee (UTZ, RFA, Organic, etc.)", rate: "+1,000.00 ETB / Ton" },
+      { code: "13.16", title: "Gravity Line Processing (Export / Upgrade)", rate: "2,000.00 ETB / Ton" },
+      { code: "13.17", title: "Carton Packing (Client-Supplied Cartons)", rate: "2,500.00 ETB / Ton" },
+      { code: "13.18", title: "Vacuum Packing (Client-Supplied Machine)", rate: "1,000.00 ETB / Ton" },
+      { code: "13.20", title: "Bulk Container Blower (20ft / 40ft)", rate: "10,000 / 16,000 ETB" },
+      { code: "13.21", title: "Sudan-Bound 'Sabiya' Coffee Preparation", rate: "250.00 ETB / Quintal" },
+      { code: "23.2", title: "Generator Fuel During Power Outage", rate: "Documented Actual Fuel Cost" }
+    ];
+
+    const specialServiceDescriptions = {
+      "13.2": "An agreed special preparation of washed coffee, separate from an ordinary grade run.",
+      "13.3": "An agreed special preparation of unwashed/qishir coffee.",
+      "13.4": "Preparation of mixed UG coffee that has not been hand-picked.",
+      "13.5": "A separate new run after quality-center failure is 75%; a client rerun before inspection is full rate. Keep the original run charge.",
+      "13.8": "Extra packing in double bags or GrainPro/EcoTact liners; liner-handling labor is separately recorded if done.",
+      "13.9": "Prepared coffee returned to the machine or hand-picking belt, alone or mixed; review overlap with a 13.5 rerun.",
+      "13.10": "Blend picked coffee using a machine.",
+      "13.11": "Blend picked coffee manually using labor.",
+      "13.12": "Blend coffee that did not pass through the main processing line.",
+      "13.14": "Additional handling for documented certified coffee on top of the applicable grade rate.",
+      "13.16": "Process export or grade-improvement coffee through the gravity line.",
+      "13.17": "Pack prepared coffee into cartons supplied by the client.",
+      "13.18": "Vacuum-pack prepared coffee with a machine supplied by the client.",
+      "13.20": "Use an air-blower machine to bulk-load a 20 ft or 40 ft container; related labor is a separate performed task.",
+      "13.21": "Prepare sabiya coffee for shipment to Sudan, charged per 100 kg.",
+      "23.2": "Client requests generator power during an outage and pays evidenced fuel purchase cost."
+    };
+
+    const laborServices = [
+      { code: "19.1.1", cat: "Inbound & Empty Bags", desc: "Unloading coffee from truck and stacking (ቡና ከመኪና ላይ አራግፎ ለመደርደር)", unit: "Per Bag (በኬሻ)", rate: 12.00 },
+      { code: "19.1.2", cat: "Outbound & Container Loading", desc: "Loading processed export coffee onto truck (ለኤክስፖርት የተዘጋጀ ቡናን መጫን)", unit: "Per Bag (በኬሻ)", rate: 12.00 },
+      { code: "19.1.3", cat: "Packaging, Sewing & Tagging", desc: "Re-bagging processed coffee bag-to-bag & stacking (ከኬሻ ወደ ኬሻ መገልበጥና መደርደር)", unit: "Per Bag (በኬሻ)", rate: 14.00 },
+      { code: "19.1.4", cat: "In-House & Silo Feeding", desc: "Dumping/feeding coffee into silo/hopper (ቡና ወደ ጎተራ/ቋት ማስገባት)", unit: "Per Bag (በኬሻ)", rate: 17.00 },
+      { code: "19.1.5", cat: "In-House & Silo Feeding", desc: "Moving coffee from one place to another & stacking (ከአንድ ቦታ ወደ ሌላ ቦታ ማዘዋወርና መደርደር)", unit: "Per Bag (በኬሻ)", rate: 11.00 },
+      { code: "19.1.6", cat: "Packaging, Sewing & Tagging", desc: "Picking up & stacking processed export coffee (የተዘጋጀን የኤክስፖርት ቡናን አንስቶ መደርደር)", unit: "Per Bag (በኬሻ)", rate: 12.00 },
+      { code: "19.1.7", cat: "Rejects, Sabiya & Drying", desc: "Drawing reject coffee from silo, weighing & stacking (ሪጀክት ቡናን ከጎተራ ቀድቶ፣ መዝኖ መደርደር)", unit: "Per Bag (በኬሻ)", rate: 16.00 },
+      { code: "19.1.8", cat: "Rejects, Sabiya & Drying", desc: "Making reject coffee 'Sabiya', weighing & stacking (ሪጀክት ቡናን ሳቢያ ማድረግ፣ መመዘንና መደርደር)", unit: "Per Bag (በኬሻ)", rate: 18.00 },
+      { code: "19.1.9", cat: "Rejects, Sabiya & Drying", desc: "Sewing and loading 'Sabiya' coffee (ሳቢያ የተደረገ ቡናን መስፋትና መጫን)", unit: "Per Bag (በኬሻ)", rate: 12.00 },
+      { code: "19.1.10", cat: "Rejects, Sabiya & Drying", desc: "Re-bagging reject coffee bag-to-bag, weighing & stacking (ሪጀክት ቡናን ከጆንያ ወደ ጆንያ ማስገልበጥ)", unit: "Per Bag (በኬሻ)", rate: 16.00 },
+      { code: "19.1.11", cat: "Packaging, Sewing & Tagging", desc: "Transferring 60kg bagged coffee into 85kg bags, weighing & stacking (በ60ኪ.ግ የተደረደረን በ85ኪ.ግ ገልብጦ መደርደር)", unit: "Per Bag (በኬሻ)", rate: 16.00 },
+      { code: "19.1.12", cat: "Rejects, Sabiya & Drying", desc: "Taking out moist coffee to sun-dry, re-bagging & restacking inside (እርጥበት ያለውን ቡና አውጥቶ ማስጣትና መደርደር)", unit: "Per Bag (በኬሻ)", rate: 20.00 },
+      { code: "19.1.13", cat: "Rejects, Sabiya & Drying", desc: "Turning/aerating wet coffee spread outside for drying (ውጭ የተሰጣን ቡና ማገላበጥ)", unit: "Per Bag (በኬሻ)", rate: 8.00 },
+      { code: "19.1.14", cat: "Outbound & Container Loading", desc: "Dumping coffee into bulk hopper for pneumatic air loading (ወደ በልክ ቋት ቡናን መገልበጥ)", unit: "Per Bag (በኬሻ)", rate: 17.00 },
+      { code: "19.1.15", cat: "Inbound & Empty Bags", desc: "Loading empty jute bags onto truck (ባዶ ጆንያ መኪና ላይ መጫን)", unit: "Per Bundle (50 pcs)", rate: 10.00 },
+      { code: "19.1.16", cat: "Inbound & Empty Bags", desc: "Unloading empty jute bags from truck & stacking (ባዶ ጆንያ ከመኪና ላይ ማራገፍና መደርደር)", unit: "Per Bundle (50 pcs)", rate: 10.00 },
+      { code: "19.1.17", cat: "Inbound & Empty Bags", desc: "Unloading GrainPro from truck & stacking (ግሪንፕሮ ከመኪና ላይ ማውረድና መደርደር)", unit: "Per Carton (ካርቶን)", rate: 10.00 },
+      { code: "19.1.18", cat: "Outbound & Container Loading", desc: "Picking up GrainPro from stack & loading onto truck (ግሪንፕሮ ከድርድር በማንሳት መኪና ላይ መጫን)", unit: "Per Carton (ካርቶን)", rate: 10.00 },
+      { code: "19.1.19", cat: "Packaging, Sewing & Tagging", desc: "Inserting and tying GrainPro liner inside bag (ግሪን ፕሮ ማስገባትና ማሰር)", unit: "Per Bag (በኬሻ)", rate: 6.00 },
+      { code: "19.1.20", cat: "Outbound & Container Loading", desc: "Lining container interior with Kraft paper (ኮንቴይነር ውስጥ ክራፍት ወረቀት መለጠፍ)", unit: "Per Container", rate: 200.00 },
+      { code: "19.1.21", cat: "In-House & Silo Feeding", desc: "Weighing on manual/hand scale (በእጅ ሚዛን መመዘን)", unit: "Per Bag (በኬሻ)", rate: 7.00 },
+      { code: "19.1.22", cat: "In-House & Silo Feeding", desc: "Machine cleaning when switching coffee batches (ማሽን ማፅዳት - ቡና ሲቀየር)", unit: "Per Bag (በኬሻ)", rate: 10.00 },
+      { code: "19.1.23", cat: "Inbound & Empty Bags", desc: "Sewing/tying empty jute bags, picking up & stacking (ባዶ ጆንያ ሰፍቶ/አስሮ አንስቶ መደርደር)", unit: "Per Bundle (50 pcs)", rate: 11.00 },
+      { code: "19.1.24", cat: "Packaging, Sewing & Tagging", desc: "Manual hand-sewing of bag (የእጅ ስፌት)", unit: "Per Bag (በኬሻ)", rate: 7.00 },
+      { code: "19.1.25", cat: "Packaging, Sewing & Tagging", desc: "Tying tag or sticking label onto bag (ጆንያ ላይ ታግ ማሰር ወይም እስቲከር መለጠፍ)", unit: "Per Bag (በኬሻ)", rate: 6.00 },
+      { code: "19.1.26", cat: "Packaging, Sewing & Tagging", desc: "Sewing tag or label onto bag (ጆንያ ላይ ታግ ወይም ሌብል መስፋት)", unit: "Per Bag (በኬሻ)", rate: 7.00 },
+      { code: "19.1.27", cat: "In-House & Silo Feeding", desc: "Moving product using handcart/trolley (በጋሪ ምርት ማንሳት)", unit: "Per Bag (በኬሻ)", rate: 7.00 },
+      { code: "19.1.28", cat: "Inbound & Empty Bags", desc: "Transporting empty bags to Warehouse #4 & stacking (ባዶ ጆንያ ወደ መጋዘን ቁጥር 4 አጓጉዞ መደርደር)", unit: "Per Bundle (50 pcs)", rate: 14.00 },
+      { code: "19.1.29", cat: "Rejects, Sabiya & Drying", desc: "Bagging loose/spilled coffee exceeding 4 bags (ፍሳሽ ከአራት ኬሻ በላይ መቅዳት)", unit: "Per Bag (በኬሻ)", rate: 10.00 },
+      { code: "19.1.30", cat: "Rejects, Sabiya & Drying", desc: "Drawing reject coffee, sewing & stacking in Warehouse #3 (ሪጀክት ቡናን ቀድቶ ሰፍቶ መጋዘን ቁጥር 3 መደርደር)", unit: "Per Bag (በኬሻ)", rate: 19.00 },
+      { code: "19.1.31", cat: "In-House & Silo Feeding", desc: "Moving coffee from Warehouse #3 stack into processing silo (ከመጋዘን ቁጥር 3 ቡናን አንስቶ ወደ ቋት ማስገባት)", unit: "Per Bag (በኬሻ)", rate: 20.00 },
+      { code: "19.1.32", cat: "Packaging, Sewing & Tagging", desc: "Filling processed coffee into double bags, sewing & stacking (በድርብ ኬሻ መቅዳት፣ መስፋትና መደርደር)", unit: "Per Bag (በኬሻ)", rate: 15.00 },
+      { code: "19.1.33", cat: "Packaging, Sewing & Tagging", desc: "Sewing processed coffee with un-dyed sisal twine & stacking (በቀለም ባልተነከረ ቃጫ ሰፍቶ ለመደርደር)", unit: "Per Bag (በኬሻ)", rate: 19.00 },
+      { code: "19.1.34", cat: "Packaging, Sewing & Tagging", desc: "Sewing processed coffee with dyed sisal twine & stacking (በቀለም በተነከረ ቃጫ ሰፍቶ ለመደርደር)", unit: "Per Bag (በኬሻ)", rate: 20.00 },
+      { code: "19.1.35", cat: "Packaging, Sewing & Tagging", desc: "Unstacking packed coffee for extra bag printing & restacking (ተጨማሪ ህትመት ለማድረግ ማውረድና መደርደር)", unit: "Per Bag (በኬሻ)", rate: 14.00 },
+      { code: "19.1.36", cat: "Packaging, Sewing & Tagging", desc: "Portioning processed coffee by weight & packing into cartons (በሚፈለገው ክብደት ተከፋፍሎ በካርቶን ማሸግ)", unit: "Per Quintal (በኩንታል)", rate: 20.00 },
+      { code: "19.1.37", cat: "In-House & Silo Feeding", desc: "Moving coffee from hall warehouse directly to belt for hand-picking (ቀጥታ ወደ ቺንጋ ለለቀማ የሚጓጓዝ ቡና)", unit: "Per Bag (በኬሻ)", rate: 19.00 },
+      { code: "19.1.38", cat: "Packaging, Sewing & Tagging", desc: "Unsewing packed coffee and re-sewing with sisal twine (ተፈቶ እንደ አዲስ በቃጫ የሚሰፋ)", unit: "Per Bag (በኬሻ)", rate: 10.00 },
+      { code: "19.1.39", cat: "Packaging, Sewing & Tagging", desc: "Unsewing packed coffee, transferring to double bags & stacking (ተፈቶ በባለ ሁለት ጆንያ ገልብጦ መደርደር)", unit: "Per Bag (በኬሻ)", rate: 16.00 },
+      { code: "19.1.40", cat: "Packaging, Sewing & Tagging", desc: "Sewing double-bagged coffee (በባለሁለት ጆንያ የተገለበጠውን ቡና ለመስፋት)", unit: "Per Bag (በኬሻ)", rate: 11.00 },
+      { code: "19.1.41", cat: "Outbound & Container Loading", desc: "Sewing inner liner/tarpaulin inside container for bulk loading (ኮንቴይነር ውስጡን ማዳበሪያ ለመስፋት)", unit: "Per Container", rate: 200.00 }
+    ];
+
+    let activeStageId = 1;
+
+    function renderPipeline() {
+      const route = document.getElementById('journey-route').value;
+      const journeys = {
+        EXPORT: {
+          steps: [1, 2, 3, 4, 5, 6],
+          note: "Receive coffee and packaging → prepare → reconcile outputs → inspect → settle and release."
+        },
+        STORAGE: {
+          steps: [2, 7, 6],
+          note: "Receive and segregate → hold without processing → settle rent and release. Article 14 has no free days."
+        },
+        REWORK: {
+          steps: [1, 2, 3, 4, 5, 6],
+          note: "If the quality center rejects a completed run, record its result and a second job at 75% of the applicable grade rate. A client-requested rerun before inspection is 100%."
+        },
+        TRANSFER: {
+          steps: [2, 8, 7, 6],
+          note: "Record both owners and the transfer date. Article 15.4 changes rent treatment; the full two-owner calculation needs client confirmation."
+        }
+      };
+      const journey = journeys[route];
+      document.getElementById('journey-note').textContent = journey.note;
+      if (!journey.steps.includes(activeStageId)) activeStageId = journey.steps[0];
+      const container = document.getElementById('pipeline-steps');
+      container.innerHTML = journey.steps.map((id, index) => {
+        const stage = lifecycleStages.find(item => item.id === id);
+        return `
+        <button type="button" aria-pressed="${stage.id === activeStageId}" onclick="selectStage(${stage.id})" class="text-left p-4 rounded-xl border-2 transition-all ${stage.id === activeStageId ? 'step-active shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider ${stage.id === activeStageId ? 'text-emerald-700' : 'text-slate-400'}">Step ${index + 1}</span>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">${stage.articles.split(',')[0]}</span>
+          </div>
+          <h4 class="font-bold text-slate-900 mt-1.5 text-sm">${stage.title}</h4>
+          <p class="text-xs text-slate-500 mt-0.5">${stage.amharic}</p>
+        </button>
+      `;
+      }).join('');
+
+      const active = lifecycleStages.find(s => s.id === activeStageId);
+      document.getElementById('stage-detail').innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200">
+          <div>
+            <span class="text-xs font-bold uppercase text-emerald-700">${active.articles}</span>
+            <h3 class="text-xl font-bold text-slate-900">${active.title} — ${active.amharic}</h3>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+          <div class="bg-white p-4 rounded-lg border border-slate-200">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">1. Documents to check (ሰነዶች)</h4>
+            <ul class="space-y-2 text-sm text-slate-700">
+              ${active.docs.map(d => `<li class="flex items-start gap-2"><span class="text-emerald-600 font-bold">•</span><span>${d}</span></li>`).join('')}
+            </ul>
+          </div>
+          <div class="bg-white p-4 rounded-lg border border-slate-200">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">2. Operational Workflow Actions</h4>
+            <ul class="space-y-2 text-sm text-slate-700">
+              ${active.actions.map(a => `<li class="flex items-start gap-2"><span class="text-emerald-600 font-bold">→</span><span>${a}</span></li>`).join('')}
+            </ul>
+          </div>
+          <div class="bg-white p-4 rounded-lg border border-slate-200">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">3. Possible charges</h4>
+            <ul class="space-y-2 text-sm text-slate-700">
+              ${active.pricing.map(p => `<li class="flex items-start gap-2"><span class="text-amber-600 font-bold">$</span><span>${p}</span></li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    function changeJourney() {
+      renderPipeline();
+      const route = document.getElementById('journey-route').value;
+      if (route === 'STORAGE' || route === 'EXPORT' || route === 'REWORK') {
+        document.getElementById('sim-route').value = route === 'STORAGE' ? 'STORAGE' : 'EXPORT';
+        document.getElementById('sim-rework').value = route === 'REWORK' ? 'ECTA' : '1';
+        runSimulation();
+      }
+    }
+
+    function changeEstimateRoute() {
+      const route = document.getElementById('sim-route').value;
+      document.getElementById('journey-route').value = route;
+      renderPipeline();
+      runSimulation();
+    }
+
+    function selectStage(id) {
+      activeStageId = id;
+      renderPipeline();
+    }
+
+    function renderCatalog() {
+      document.getElementById('processing-table-body').innerHTML = processingRates.map(r => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2 px-3 font-mono text-xs font-semibold text-slate-600">${r.code}</td>
+          <td class="py-2 px-3 font-medium text-slate-800">${r.name}</td>
+          <td class="py-2 px-3 text-right font-semibold text-slate-700">${r.s14}</td>
+          <td class="py-2 px-3 text-right font-semibold text-emerald-700">${r.s15}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('special-services-grid').innerHTML = specialServices.map(s => `
+        <div class="p-3 rounded-lg border border-slate-200 bg-slate-50 flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-xs font-bold text-emerald-700">Art. ${s.code}</span>
+          </div>
+          <p class="font-medium text-slate-800 mt-1 text-xs">${s.title}</p>
+          <p class="text-xs text-slate-600 mt-1">${specialServiceDescriptions[s.code]}</p>
+          <p class="font-bold text-slate-900 mt-1 text-sm">${s.rate}</p>
+        </div>
+      `).join('');
+
+      renderLaborCatalog();
+    }
+
+    function renderLaborCatalog() {
+      const q = (document.getElementById('labor-search').value || '').toLowerCase();
+      const cat = document.getElementById('labor-category').value;
+      const filtered = laborServices.filter(item => {
+        const matchCat = cat === 'ALL' || item.cat === cat;
+        const matchQ = item.code.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q) || item.cat.toLowerCase().includes(q);
+        return matchCat && matchQ;
+      });
+
+      document.getElementById('labor-table-body').innerHTML = filtered.map(item => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2 px-3 font-mono text-xs font-semibold text-slate-600">${item.code}</td>
+          <td class="py-2 px-3 text-xs text-slate-500">${item.cat}</td>
+          <td class="py-2 px-3 font-medium text-slate-800">${item.desc}</td>
+          <td class="py-2 px-3 text-xs text-slate-600">${item.unit}</td>
+          <td class="py-2 px-3 text-right font-bold text-emerald-700">${item.rate.toFixed(2)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function fmt(num) {
+      return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function switchTab(tab) {
+      ['flow', 'catalog', 'simulator', 'forms', 'assumptions'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        btn.setAttribute('aria-pressed', String(t === tab));
+        if (t === tab) {
+          btn.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-emerald-600 text-white transition";
+        } else {
+          btn.className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+        }
+      });
+    }
+
+    renderPipeline();
+    renderCatalog();
+    initializeEstimate();
+    switchTab('flow');
+  </script>
+</body>
+</html>
