@@ -9,6 +9,7 @@ Open `index.html` in a browser. It has no build step or database. Styling and fo
 ## What it demonstrates
 
 - Branching client journeys for export preparation, storage-only, quality rework, and raw-coffee ownership transfer.
+- Four fictional dated operations examples with step-by-step receipts, output, quality, transfer, payment, partial release, owner balances, and simulated release checks. The selected example and step are saved only in this browser's local storage; Reset clears its progress.
 - The contract's grade, special-service, storage, bag printing, and 41 labor tariffs.
 - A draft estimate for ordinary washed/unwashed export preparation or storage-only, with explicit quantity validation, optional actual labor, a separate rework line, and an optional illustrative tax input.
 - Visible notices for the unresolved calendar-month convention, modifier quantity basis, and sub-50-bag printing.
@@ -17,7 +18,7 @@ The estimate uses 90 days as a **stated illustration** of a three-month storage 
 
 ## Verify
 
-From this directory, run `node --test test/calculator.test.cjs`. Also review the flow and estimate in a browser at desktop and mobile widths before publishing. The static page has no type-check, lint, or production build command.
+From this directory, run `node --test test/*.test.cjs`. Also review the flow, operations examples, and estimate in a browser at desktop and mobile widths before publishing. The static page has no type-check, lint, or production build command.
 
 ## Before any payable invoice
 
